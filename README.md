@@ -4,7 +4,19 @@
 
 **Author: OSAZEE · Public beta 0.1.0b1 · MIT license**
 
-Flexible Home Assistant controls for one or more **IKEA BILRESA dual-button Matter remotes**: freely configurable action sequences, combined presses, optional hold-to-dim, and experimental rapid triple-click support.
+Make your **IKEA BILRESA dual-button Matter remotes** do more in Home Assistant: **dimming, single, double and triple clicks, dual-button clicks and holds**, with freely configurable actions for every gesture. Use one remote or give several remotes the same controls through a shared blueprint.
+
+## Features
+
+- **Single, double and triple clicks:** assign different action sequences to each button and click type.
+- **Dual-button clicks:** press both buttons together for combined short-press, hold and triple-click gestures.
+- **Dimming or custom holds:** hold Button 1 to brighten and Button 2 to dim a selected light, or use both holds for your own actions instead.
+- **Multiple remotes, shared controls:** add more remotes to one automation so they all use the same action assignments.
+- **Multiple actions per gesture:** control lights, plugs, covers, scenes and scripts, or combine several Home Assistant actions in order.
+- **Adjustable recognition window:** fine-tune the default 250 ms cooldown to balance response speed and combined-press detection.
+- **Optional rapid triple-click bridge:** the companion integration exposes the Matter signal needed for fast triple-click actions on BILRESA firmware 1.9.15.
+
+**Triple-click limitation:** on firmware 1.9.15, the bridge recognizes **three or more quick clicks**, not exactly three. Rapid triple clicks require the companion integration and remain an experimental beta feature.
 
 This is an independent community project, not an official IKEA or Home Assistant integration.
 
