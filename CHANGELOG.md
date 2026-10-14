@@ -2,6 +2,16 @@
 
 Author: OSAZEE.
 
+## Unreleased
+
+- Add **Both buttons - Double click** as the twelfth gesture assignment, with a
+  backward-compatible empty action-list default and multiple actions per gesture.
+- Match native double-click events from the same remote in either button order;
+  after the existing legacy triple-click decision window, run the combined sequence
+  once and suppress both individual double-click actions, even with an empty list.
+- Preserve triple-click precedence, recognition-window bounds and fresh-event guards.
+- Add offline blueprint sequence regression tests alongside the Matter detector tests.
+
 ## 0.1.0b1 — 2026-10-14
 
 Initial public beta.

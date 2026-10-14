@@ -5,16 +5,17 @@ blueprint:
     clicks, both-button clicks and holds, multiple remotes and multi-step actions
     for your IKEA BILRESA dual-button Matter remote.
 
-    **Eleven gesture assignments**
+    **Twelve gesture assignments**
 
     - Button 1 and Button 2: single click, double click, triple click and hold each.
-    - Both buttons on the same remote: short press, hold and triple click.
+    - Both buttons on the same remote: short press, double click, triple click and hold.
     - Every assignment accepts multiple Home Assistant actions in order: lights,
       plugs, covers, scenes, scripts and more. Use Add action to extend a sequence;
       an empty list does nothing. No personal devices or actions are preassigned.
     - Recognized combined gestures select the combined sequence instead of the
-      individual sequences. Different remotes are never combined. There is no
-      separate both-button double-click assignment.
+      individual sequences. Different remotes are never combined. A combined double
+      click requires two multi_press_2 events within the recognition window, then
+      waits one further window for the legacy third-click fallback before acting.
 
     **Custom holds or built-in light dimming**
 
@@ -70,7 +71,8 @@ blueprint:
 
     English inputs and documentation. Author OSAZEE. MIT license. Direct blueprint
     import, optional HACS custom-repository/manual companion installation, examples,
-    diagnostics and 24 detector regression tests with CI/HACS validation. Re-import
+    diagnostics, 24 detector regression tests and offline blueprint-sequence tests
+    with CI/HACS validation. Re-import
     the blueprint for logic updates; HACS companion updates do not update it.
 
     Requires Home Assistant Core 2026.8.0+, a dual-button BILRESA paired through
@@ -273,6 +275,15 @@ blueprint:
           name: Both buttons - Hold
           description: Add any actions to run when both buttons on the same remote
             are held within the recognition window. Works in both hold modes.
+          default: []
+          selector:
+            action: {}
+        double_both_action:
+          name: Both buttons - Double click
+          description: Add any actions to run when both buttons on the same remote
+            report a double click within the recognition window. Waits one further
+            window for a possible legacy triple click; suppresses both individual
+            double-click actions even when this list is empty. Works in both hold modes.
           default: []
           selector:
             action: {}
@@ -680,6 +691,8 @@ actions:
               sequence:
               - sequence: !input triple_button_2_action
               - stop: Button 2 triple click handled once.
+        - sequence: !input double_both_action
+        - stop: Combined double click handled once.
     - sequence: !input double_button_1_action
   - conditions:
     - condition: template
@@ -889,6 +902,8 @@ actions:
               sequence:
               - sequence: !input triple_button_2_action
               - stop: Button 2 triple click handled once.
+        - sequence: !input double_both_action
+        - stop: Combined double click handled once.
     - sequence: !input double_button_2_action
   - conditions:
     - condition: template

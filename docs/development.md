@@ -4,9 +4,19 @@ Author: OSAZEE.
 
 ## Tests
 
-Run `python -B -m unittest discover -s tests -v` from the repository root. No Home Assistant installation or external test package is required. Syntax-check the integration with `python -m compileall -q custom_components`.
+Install the pinned test dependencies with `python -m pip install -r tests/requirements.txt`,
+then run `python -B -m unittest discover -s tests -v` from the repository root.
+No Home Assistant installation is required. Syntax-check the integration with
+`python -m compileall -q custom_components`.
 
-The detector is a standalone standard-library module. The tests do **not** establish full Home Assistant integration or blueprint runtime compatibility.
+The detector is a standalone standard-library module. Blueprint click tests load
+the actual YAML and execute its Jinja/branch/wait/stop logic using a bounded,
+marker-action-only interpreter and a simulated clock. They cover both-button double
+clicks in both orders, both hold modes, multi-action ordering, empty assignments,
+remote isolation, adjustable timing, invalid/restored/stale states and legacy/native/raw
+triple-click precedence. The interpreter deliberately rejects unmodeled action types;
+it does not run services or simulate hardware. These tests do **not** establish full
+Home Assistant schema/integration/runtime compatibility or physical-device behavior.
 
 ## Packaging
 

@@ -20,7 +20,9 @@ jobs:
           python-version: "3.14"
       - name: Syntax check
         run: python -m compileall -q custom_components
-      - name: Detector regression tests
+      - name: Install blueprint test dependencies
+        run: python -m pip install -r tests/requirements.txt
+      - name: Detector and blueprint regression tests
         run: python -B -m unittest discover -s tests -v
 
   hacs:

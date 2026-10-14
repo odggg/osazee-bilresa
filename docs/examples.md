@@ -21,6 +21,12 @@ Use the same moving condition for **Button 2 - Double click**, with **Cover: Clo
 
 Use **Both buttons - Short press** to toggle one plug and **Both buttons - Hold** to toggle another. Do not duplicate those assignments in the single-button action lists or another automation listening to the same remote.
 
+Use **Both buttons - Double click** for a separate scene or multi-action sequence.
+Double-click both buttons on the same remote; their native double-click events must
+arrive within the recognition window. The combined action runs once after the
+additional legacy triple-click decision window, without either individual double-click
+action. An empty combined list deliberately does nothing for that recognized combination.
+
 ## Daily brightness preference
 
 A 06:00 brightness preference is a separate scheduled automation, not a remote gesture. Do not assume `light.turn_on` can set an off light's brightness without powering it on. Whether a truly non-powering brightness update is possible depends on the light/integration. Do not simulate it by briefly turning the light on and off.
