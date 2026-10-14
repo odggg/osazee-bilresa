@@ -1,6 +1,6 @@
 <img src="custom_components/osazee_bilresa/brand/icon.png" width="96" alt="OSAZEE BILRESA icon">
 
-# Ultimate IKEA Bilresa Dual Blueprint - Dimming, Tripple Click, Both Button Click
+# The ULTIMATE IKEA Bilresa Blueprint — 12 Gestures, Triple Clicks, Dual-Button Combos, Dimming & Multi-Remote Control
 
 **Author: OSAZEE · Public beta 0.1.0b1 · MIT license**
 
