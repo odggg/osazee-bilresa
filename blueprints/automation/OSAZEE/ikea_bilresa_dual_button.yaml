@@ -1,46 +1,84 @@
 blueprint:
-  name: IKEA BILRESA - Multiple Remotes, Custom Actions and Optional Dimming
-  description: 'Control one or more IKEA BILRESA dual-button remotes with shared actions.
+  name: Ultimate IKEA Bilresa Dual Blueprint - Dimming, Tripple Click, Both Button Click
+  description: |-
+    Two buttons. A whole room of possibilities. Dimming, single, double and triple
+    clicks, both-button clicks and holds, multiple remotes and multi-step actions
+    for your IKEA BILRESA dual-button Matter remote.
 
+    **Eleven gesture assignments**
 
-    Start with Remote 1: edit its entry and select Button 1 and Button 2. Use Add
-    in the Add remote list to add more remotes. Each entry has a name and two event-entity
-    pickers. Do not reuse an event entity in another entry. All remotes always share
-    the action assignments.
+    - Button 1 and Button 2: single click, double click, triple click and hold each.
+    - Both buttons on the same remote: short press, hold and triple click.
+    - Every assignment accepts multiple Home Assistant actions in order: lights,
+      plugs, covers, scenes, scripts and more. Use Add action to extend a sequence;
+      an empty list does nothing. No personal devices or actions are preassigned.
+    - Recognized combined gestures select the combined sequence instead of the
+      individual sequences. Different remotes are never combined. There is no
+      separate both-button double-click assignment.
 
+    **Custom holds or built-in light dimming**
 
-    Choose the single-button hold behavior:
+    - Custom actions: freely assign both single-button holds; no controlled light
+      or other target device is required by the blueprint.
+    - Light dimming: hold Button 1 to brighten and Button 2 to dim one selected
+      light. Adjust the full ramp (1-10 s, default 3 s), release-event latency
+      compensation (0-1 s, default 0.06 s) and release transition (0-2 s, default
+      0.2 s). Release stops the ramp at an estimated brightness.
+    - Dimming reserves both single-button holds; their custom action lists remain
+      visible but are ignored. All clicks and both-button gestures stay configurable.
 
-    - Custom actions: every gesture can run a sequence of actions; no controlled device
-    is required.
+    **Add remotes and fine-tune recognition**
 
-    - Light dimming: hold button 1 to brighten and button 2 to dim the selected light.
-    The two custom single-button hold action lists are ignored in this mode.
+    - Start with Remote 1: edit its name and choose its two native button event
+      entities. Use Add in the Add remote list for more remotes. All remotes in
+      this automation share the assignments and future edits. Separate automations
+      can keep different assignments while using the same installed blueprint logic.
+    - Incomplete entries are ignored. Duplicate entity selections disable gesture
+      handling until corrected. The native Add control follows Home Assistant's language.
+    - Recognition window / cooldown: 100-1500 ms in 10 ms steps, default 250 ms.
+      Lower values respond faster; higher values allow more combination tolerance.
+      Matching uses Home Assistant event arrival, not the remote's internal click
+      timeout. Hardware reporting can add delay; double-click actions wait for the window.
 
+    **Optional rapid triple-click companion**
 
-    All click actions and both-button gestures remain configurable in either mode.
-    Use Add action to run multiple actions for any gesture.
+    Native multi_press_3 is supported when supplied; the legacy double-then-single
+    fallback depends on integration events. On BILRESA firmware 1.9.15, install the
+    OSAZEE BILRESA companion and enable Raw triple-click bridge for rapid clicks.
+    Its aborted-multipress signal means AT LEAST THREE quick presses, not exactly
+    three: four or more clicks may run the same action. Both-button triple matching
+    requires both completions from the same remote within the recognition window.
 
+    The local event-driven companion uses the existing Matter client and discovers
+    eligible native entities: no re-pairing, extra host, credentials, manual node IDs,
+    separate Matter connection or Core/server patch. Only selected remotes run this
+    automation. It reconciles replaced clients after reload, with a 30-second local
+    reference watchdog (not device polling), current registry lookup and diagnostics
+    containing the emitted-event counter and last source event.
 
-    The dimming section is optional. Input fields remain visible in Home Assistant;
-    fields marked Custom actions only are ignored in Light dimming mode.
+    **Defensive gesture handling**
 
+    Restored, unknown, unavailable and non-advancing native event states are rejected.
+    Pending detection is discarded on reload/restart. The companion rejects duplicate
+    event numbers and stale/incomplete sequences; diagnostic history only establishes
+    replay protection and never dispatches gestures. Startup-time raw events do not
+    emit gestures. One recognized gesture selects one sequence; single mode prevents
+    overlapping runs and ignores new gestures while the sequence or dimming run is
+    active. Other automations listening to the remote can still conflict.
 
-    Triple-click support: native multi_press_3 events are handled if available. For
-    BILRESA firmware 1.9.15, enable Raw triple-click bridge and install the OSAZEE
-    BILRESA companion integration. The bridge detects an aborted multipress meaning
-    AT LEAST THREE quick presses, not exactly three. Four or more clicks may run the
-    same action. The legacy double-then-single fallback is integration-dependent.
-    Both-button gestures only combine events from the same remote.
+    **Sharing, requirements and beta status**
 
+    English inputs and documentation. Author OSAZEE. MIT license. Direct blueprint
+    import, optional HACS custom-repository/manual companion installation, examples,
+    diagnostics and 24 detector regression tests with CI/HACS validation. Re-import
+    the blueprint for logic updates; HACS companion updates do not update it.
 
-    The recognition window defaults to 250 ms and is adjustable. Pending gesture detection
-    is discarded on reload or restart. One gesture selects one action sequence; single
-    mode prevents overlapping runs and ignores new gestures while an action sequence
-    is still running.
-
-
-    Author: OSAZEE'
+    Requires Home Assistant Core 2026.8.0+, a dual-button BILRESA paired through
+    Matter and two enabled native button event entities. The companion does not
+    support scroll-wheel BILRESA, ZHA or Zigbee2MQTT. Rapid triple recognition is
+    experimental; broader physical testing is needed and future Core/firmware
+    compatibility is not guaranteed. Cover movement/stop can be configured as
+    actions; daily brightness schedules belong in separate automations.
   domain: automation
   author: OSAZEE
   source_url: https://github.com/odggg/osazee-bilresa/blob/main/blueprints/automation/OSAZEE/ikea_bilresa_dual_button.yaml
