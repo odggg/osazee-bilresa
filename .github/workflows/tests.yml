@@ -1,0 +1,33 @@
+name: Detector tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Syntax check
+        run: python -m compileall -q custom_components
+      - name: Detector regression tests
+        run: python -B -m unittest discover -s tests -v
+
+  hacs:
+    name: HACS validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate integration repository
+        uses: hacs/action@main
+        with:
+          category: integration

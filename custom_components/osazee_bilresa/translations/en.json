@@ -1,0 +1,14 @@
+{
+  "title": "OSAZEE BILRESA",
+  "config": {
+    "step": {
+      "user": {
+        "title": "OSAZEE BILRESA",
+        "description": "Enable live aborted-multipress events for IKEA BILRESA dual-button Matter remotes. Requires the Matter integration. Historical events are never replayed. On firmware 1.9.15 this identifies at least three presses, not exactly three. Configure actions in the OSAZEE blueprint."
+      }
+    },
+    "abort": {
+      "already_configured": "The BILRESA bridge is already configured."
+    }
+  }
+}

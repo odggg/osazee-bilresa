@@ -1,0 +1,1257 @@
+blueprint:
+  name: IKEA BILRESA - Multiple Remotes, Custom Actions and Optional Dimming
+  description: 'Control one or more IKEA BILRESA dual-button remotes with shared actions.
+
+
+    Start with Remote 1: edit its entry and select Button 1 and Button 2. Use Add
+    in the Add remote list to add more remotes. Each entry has a name and two event-entity
+    pickers. Do not reuse an event entity in another entry. All remotes always share
+    the action assignments.
+
+
+    Choose the single-button hold behavior:
+
+    - Custom actions: every gesture can run a sequence of actions; no controlled device
+    is required.
+
+    - Light dimming: hold button 1 to brighten and button 2 to dim the selected light.
+    The two custom single-button hold action lists are ignored in this mode.
+
+
+    All click actions and both-button gestures remain configurable in either mode.
+    Use Add action to run multiple actions for any gesture.
+
+
+    The dimming section is optional. Input fields remain visible in Home Assistant;
+    fields marked Custom actions only are ignored in Light dimming mode.
+
+
+    Triple-click support: native multi_press_3 events are handled if available. For
+    BILRESA firmware 1.9.15, enable Raw triple-click bridge and install the OSAZEE
+    BILRESA companion integration. The bridge detects an aborted multipress meaning
+    AT LEAST THREE quick presses, not exactly three. Four or more clicks may run the
+    same action. The legacy double-then-single fallback is integration-dependent.
+    Both-button gestures only combine events from the same remote.
+
+
+    The recognition window defaults to 250 ms and is adjustable. Pending gesture detection
+    is discarded on reload or restart. One gesture selects one action sequence; single
+    mode prevents overlapping runs and ignores new gestures while an action sequence
+    is still running.
+
+
+    Author: OSAZEE'
+  domain: automation
+  author: OSAZEE
+  source_url: https://github.com/odggg/osazee-bilresa/blob/main/blueprints/automation/OSAZEE/ikea_bilresa_dual_button.yaml
+  homeassistant:
+    min_version: 2026.8.0
+  input:
+    usage:
+      name: Usage
+      icon: mdi:tune
+      input:
+        hold_mode:
+          name: Single-button hold behavior
+          description: Select Custom actions for freely assigned long presses, or
+            Light dimming to reserve both single-button holds for brightness control.
+            Click and both-button actions are unaffected.
+          default: custom
+          selector:
+            select:
+              mode: dropdown
+              options:
+              - value: custom
+                label: Custom actions
+              - value: dim
+                label: Light dimming
+              custom_value: false
+              multiple: false
+              sort: false
+        raw_triple_enabled:
+          name: Raw triple-click bridge
+          description: Requires the OSAZEE BILRESA companion integration. On firmware
+            1.9.15, three or more rapid clicks produce an aborted multipress instead
+            of multi_press_3. Enable this to use that live-only signal. Four or more
+            clicks may execute the same triple-click action.
+          default: false
+          selector:
+            boolean: {}
+    remotes:
+      name: Remotes
+      description: One remote entry is provided by default. Edit it to select its
+        two button event entities. Add more entries below; every remote uses the same
+        actions.
+      icon: mdi:remote
+      input:
+        remote_list:
+          name: Add remote
+          description: Edit Remote 1 first, then use Add to add another remote. The
+            native Add button follows your Home Assistant language. Select distinct
+            event entities for each button and remote. Incomplete entries are ignored;
+            duplicate entities disable gesture handling until corrected.
+          default:
+          - name: Remote 1
+          selector:
+            object:
+              multiple: true
+              label_field: name
+              fields:
+                name:
+                  label: Remote name
+                  required: true
+                  selector:
+                    text:
+                      multiple: false
+                      multiline: false
+                button_1:
+                  label: Button 1
+                  required: true
+                  selector:
+                    entity:
+                      filter:
+                      - domain:
+                        - event
+                      reorder: false
+                      multiple: false
+                button_2:
+                  label: Button 2
+                  required: true
+                  selector:
+                    entity:
+                      filter:
+                      - domain:
+                        - event
+                      reorder: false
+                      multiple: false
+    dimming:
+      name: Dimming settings (Light dimming only)
+      description: Used only when Single-button hold behavior is Light dimming. Select
+        a dimmable light in that mode. Leave this section empty when using Custom
+        actions.
+      icon: mdi:brightness-6
+      collapsed: true
+      input:
+        light_entity:
+          name: Light to dim
+          description: Optional in Custom actions mode; required to use Light dimming.
+            This selection does not assign any click actions.
+          default: []
+          selector:
+            entity:
+              filter:
+              - domain:
+                - light
+              reorder: false
+              multiple: false
+        brightness_ramp_seconds:
+          name: Full brightness ramp time
+          description: Time to dim from minimum to maximum brightness.
+          default: 3
+          selector:
+            number:
+              min: 1.0
+              max: 10.0
+              step: 0.1
+              unit_of_measurement: s
+              mode: slider
+        latency_compensation_seconds:
+          name: Dimming latency compensation
+          description: Compensates for the delay between button release and the release
+            event.
+          default: 0.06
+          selector:
+            number:
+              min: 0.0
+              max: 1.0
+              step: 0.01
+              unit_of_measurement: s
+              mode: slider
+        release_transition_seconds:
+          name: Release transition
+          description: Transition used when stopping at the estimated brightness on
+            release.
+          default: 0.2
+          selector:
+            number:
+              min: 0.0
+              max: 2.0
+              step: 0.05
+              unit_of_measurement: s
+              mode: slider
+    gesture_actions:
+      name: Gesture actions
+      description: Each field accepts multiple actions, executed in order. Leave a
+        field empty to do nothing. The two single-button hold fields are used only
+        in Custom actions mode.
+      icon: mdi:gesture-tap-button
+      input:
+        single_button_1_action:
+          name: Button 1 - Single click
+          description: Add any actions to run on a single click of button 1.
+          default: []
+          selector:
+            action: {}
+        single_button_2_action:
+          name: Button 2 - Single click
+          description: Add any actions to run on a single click of button 2.
+          default: []
+          selector:
+            action: {}
+        double_button_1_action:
+          name: Button 1 - Double click
+          description: Add any actions to run on a double click of button 1.
+          default: []
+          selector:
+            action: {}
+        double_button_2_action:
+          name: Button 2 - Double click
+          description: Add any actions to run on a double click of button 2.
+          default: []
+          selector:
+            action: {}
+        hold_button_1_action:
+          name: Button 1 - Hold (Custom actions only)
+          description: IGNORED in Light dimming mode. Add any actions to run on a
+            single-button hold in Custom actions mode.
+          default: []
+          selector:
+            action: {}
+        hold_button_2_action:
+          name: Button 2 - Hold (Custom actions only)
+          description: IGNORED in Light dimming mode. Add any actions to run on a
+            single-button hold in Custom actions mode.
+          default: []
+          selector:
+            action: {}
+        short_both_action:
+          name: Both buttons - Short press
+          description: Add any actions to run when both buttons on the same remote
+            are pressed within the recognition window.
+          default: []
+          selector:
+            action: {}
+        long_both_action:
+          name: Both buttons - Hold
+          description: Add any actions to run when both buttons on the same remote
+            are held within the recognition window. Works in both hold modes.
+          default: []
+          selector:
+            action: {}
+        triple_button_1_action:
+          name: Button 1 - Triple click
+          description: Add any actions to run on a recognized triple click of button
+            1.
+          default: []
+          selector:
+            action: {}
+        triple_button_2_action:
+          name: Button 2 - Triple click
+          description: Add any actions to run on a recognized triple click of button
+            2.
+          default: []
+          selector:
+            action: {}
+        triple_both_action:
+          name: Both buttons - Triple click
+          description: Add any actions to run when a triple click of both buttons
+            on the same remote is recognized.
+          default: []
+          selector:
+            action: {}
+    timing:
+      name: Gesture timing
+      icon: mdi:timer-cog-outline
+      collapsed: true
+      input:
+        cooldown_ms:
+          name: Recognition window / cooldown
+          description: Maximum delay between related events. Lower values respond
+            faster; higher values allow slower combined presses and software triple
+            clicks. Double-click actions wait for this window to expire before executing.
+          default: 250
+          selector:
+            number:
+              min: 100.0
+              max: 1500.0
+              step: 10.0
+              unit_of_measurement: ms
+              mode: slider
+mode: single
+max_exceeded: silent
+variables:
+  remote_list: !input remote_list
+  configured_remotes: '{{ remote_list | selectattr(''button_1'', ''defined'') | selectattr(''button_2'',
+    ''defined'') | selectattr(''button_1'', ''match'', ''^event\\.'') | selectattr(''button_2'',
+    ''match'', ''^event\\.'') | list }}'
+  remote_entity_ids: '{{ (configured_remotes | map(attribute=''button_1'') | list)
+    + (configured_remotes | map(attribute=''button_2'') | list) }}'
+  hold_mode: !input hold_mode
+  light_entity: !input light_entity
+  scaled_ramp_time: !input brightness_ramp_seconds
+  latency_compensation_offset: !input latency_compensation_seconds
+  release_transition: !input release_transition_seconds
+  cooldown_ms: !input cooldown_ms
+  raw_triple_enabled: !input raw_triple_enabled
+triggers:
+- trigger: event
+  event_type: state_changed
+  id: remote_event
+- trigger: event
+  event_type: osazee_bilresa_multipress_aborted
+  id: raw_triple
+  enabled: !input raw_triple_enabled
+conditions:
+- condition: trigger
+  id:
+  - remote_event
+  - raw_triple
+- condition: template
+  value_template: '{{ trigger.event.data.entity_id in remote_entity_ids and remote_entity_ids
+    | count == remote_entity_ids | unique | list | count }}'
+- condition: or
+  conditions:
+  - condition: and
+    conditions:
+    - condition: trigger
+      id: remote_event
+    - condition: template
+      value_template: "{% set old = trigger.event.data.old_state %}\n{% set new =
+        trigger.event.data.new_state %}\n{{ old is not none and new is not none\n
+        \  and old.state not in ['unknown', 'unavailable']\n   and new.state not in
+        ['unknown', 'unavailable']\n   and not old.attributes.get('restored', false)\n
+        \  and not new.attributes.get('restored', false)\n   and as_timestamp(new.state,
+        0) > as_timestamp(old.state, 0)\n   and new.attributes.get('event_type') in
+        ['multi_press_1', 'multi_press_2', 'multi_press_3', 'long_press'] }}"
+  - condition: and
+    conditions:
+    - condition: trigger
+      id: raw_triple
+    - condition: template
+      value_template: '{{ raw_triple_enabled and trigger.event.data.get(''event_type'')
+        == ''multi_press_aborted'' and trigger.event.data.get(''presses_at_least'',
+        0) == 3 }}'
+actions:
+- variables:
+    source_entity: '{{ trigger.event.data.entity_id }}'
+    active_remote: '{{ ((configured_remotes | selectattr(''button_1'', ''eq'', source_entity)
+      | list) + (configured_remotes | selectattr(''button_2'', ''eq'', source_entity)
+      | list)) | first }}'
+    button_1_entity: '{{ active_remote.button_1 }}'
+    button_2_entity: '{{ active_remote.button_2 }}'
+    gesture: '{{ (''native_triple'' if trigger.id == ''raw_triple'' else {''multi_press_1'':
+      ''single'', ''multi_press_2'': ''double'', ''multi_press_3'': ''native_triple'',
+      ''long_press'': ''hold''}[trigger.event.data.new_state.attributes.event_type])
+      ~ (''_up'' if source_entity == button_1_entity else ''_down'') }}'
+- choose:
+  - conditions:
+    - condition: template
+      value_template: '{{ gesture == ''single_up'' }}'
+    sequence:
+    - alias: Start a bounded wait for a matching event from this remote
+      variables:
+        gesture_wait_completed: false
+        gesture_wait_id: ''
+        gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000) }}'
+    - repeat:
+        while:
+        - condition: template
+          value_template: '{{ not gesture_wait_completed and as_timestamp(now()) <
+            gesture_wait_deadline }}'
+        sequence:
+        - wait_for_trigger:
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_2_entity }}'
+            id: '0'
+          timeout:
+            seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max }}'
+          continue_on_timeout: true
+        - if:
+          - condition: template
+            value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+              %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old is
+              not none and new is not none\n     and old.state not in ['unknown',
+              'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+              \    and not old.attributes.get('restored', false)\n     and not new.attributes.get('restored',
+              false)\n     and as_timestamp(new.state, 0) > as_timestamp(old.state,
+              0)\n     and ((wait.trigger.id == '0' and new.attributes.get('event_type')
+              == 'multi_press_1')) }}\n{% else %}false{% endif %}"
+          then:
+          - variables:
+              gesture_wait_completed: true
+              gesture_wait_id: '{{ wait.trigger.id }}'
+    - if:
+      - condition: template
+        value_template: '{{ gesture_wait_completed }}'
+      then:
+      - sequence: !input short_both_action
+      - stop: Combined short press handled once.
+    - sequence: !input single_button_1_action
+  - conditions:
+    - condition: template
+      value_template: '{{ gesture == ''single_down'' }}'
+    sequence:
+    - alias: Start a bounded wait for a matching event from this remote
+      variables:
+        gesture_wait_completed: false
+        gesture_wait_id: ''
+        gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000) }}'
+    - repeat:
+        while:
+        - condition: template
+          value_template: '{{ not gesture_wait_completed and as_timestamp(now()) <
+            gesture_wait_deadline }}'
+        sequence:
+        - wait_for_trigger:
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_1_entity }}'
+            id: '0'
+          timeout:
+            seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max }}'
+          continue_on_timeout: true
+        - if:
+          - condition: template
+            value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+              %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old is
+              not none and new is not none\n     and old.state not in ['unknown',
+              'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+              \    and not old.attributes.get('restored', false)\n     and not new.attributes.get('restored',
+              false)\n     and as_timestamp(new.state, 0) > as_timestamp(old.state,
+              0)\n     and ((wait.trigger.id == '0' and new.attributes.get('event_type')
+              == 'multi_press_1')) }}\n{% else %}false{% endif %}"
+          then:
+          - variables:
+              gesture_wait_completed: true
+              gesture_wait_id: '{{ wait.trigger.id }}'
+    - if:
+      - condition: template
+        value_template: '{{ gesture_wait_completed }}'
+      then:
+      - sequence: !input short_both_action
+      - stop: Combined short press handled once.
+    - sequence: !input single_button_2_action
+  - conditions:
+    - condition: template
+      value_template: '{{ gesture == ''double_up'' }}'
+    sequence:
+    - alias: Start a bounded wait for a matching event from this remote
+      variables:
+        gesture_wait_completed: false
+        gesture_wait_id: ''
+        gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000) }}'
+    - repeat:
+        while:
+        - condition: template
+          value_template: '{{ not gesture_wait_completed and as_timestamp(now()) <
+            gesture_wait_deadline }}'
+        sequence:
+        - wait_for_trigger:
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_1_entity }}'
+            id: same_third
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_2_entity }}'
+            id: opposite_double
+          timeout:
+            seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max }}'
+          continue_on_timeout: true
+        - if:
+          - condition: template
+            value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+              %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old is
+              not none and new is not none\n     and old.state not in ['unknown',
+              'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+              \    and not old.attributes.get('restored', false)\n     and not new.attributes.get('restored',
+              false)\n     and as_timestamp(new.state, 0) > as_timestamp(old.state,
+              0)\n     and ((wait.trigger.id == 'same_third' and new.attributes.get('event_type')
+              == 'multi_press_1') or (wait.trigger.id == 'opposite_double' and new.attributes.get('event_type')
+              == 'multi_press_2')) }}\n{% else %}false{% endif %}"
+          then:
+          - variables:
+              gesture_wait_completed: true
+              gesture_wait_id: '{{ wait.trigger.id }}'
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ gesture_wait_completed and gesture_wait_id == ''same_third''
+            }}'
+        sequence:
+        - sequence: !input triple_button_1_action
+        - stop: Button 1 triple click handled once.
+      - conditions:
+        - condition: template
+          value_template: '{{ gesture_wait_completed and gesture_wait_id == ''opposite_double''
+            }}'
+        sequence:
+        - alias: Start a bounded wait for a matching event from this remote
+          variables:
+            gesture_wait_completed: false
+            gesture_wait_id: ''
+            gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000)
+              }}'
+        - repeat:
+            while:
+            - condition: template
+              value_template: '{{ not gesture_wait_completed and as_timestamp(now())
+                < gesture_wait_deadline }}'
+            sequence:
+            - wait_for_trigger:
+              - trigger: event
+                event_type: state_changed
+                event_data:
+                  entity_id: '{{ button_1_entity }}'
+                id: third_up
+              - trigger: event
+                event_type: state_changed
+                event_data:
+                  entity_id: '{{ button_2_entity }}'
+                id: third_down
+              timeout:
+                seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max
+                  }}'
+              continue_on_timeout: true
+            - if:
+              - condition: template
+                value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                  %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old
+                  is not none and new is not none\n     and old.state not in ['unknown',
+                  'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+                  \    and not old.attributes.get('restored', false)\n     and not
+                  new.attributes.get('restored', false)\n     and as_timestamp(new.state,
+                  0) > as_timestamp(old.state, 0)\n     and ((wait.trigger.id == 'third_up'
+                  and new.attributes.get('event_type') == 'multi_press_1') or (wait.trigger.id
+                  == 'third_down' and new.attributes.get('event_type') == 'multi_press_1'))
+                  }}\n{% else %}false{% endif %}"
+              then:
+              - variables:
+                  gesture_wait_completed: true
+                  gesture_wait_id: '{{ wait.trigger.id }}'
+        - if:
+          - condition: template
+            value_template: '{{ gesture_wait_completed }}'
+          then:
+          - variables:
+              first_third: '{{ gesture_wait_id }}'
+          - choose:
+            - conditions:
+              - condition: template
+                value_template: '{{ first_third == ''third_up'' }}'
+              sequence:
+              - alias: Start a bounded wait for a matching event from this remote
+                variables:
+                  gesture_wait_completed: false
+                  gesture_wait_id: ''
+                  gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms /
+                    1000) }}'
+              - repeat:
+                  while:
+                  - condition: template
+                    value_template: '{{ not gesture_wait_completed and as_timestamp(now())
+                      < gesture_wait_deadline }}'
+                  sequence:
+                  - wait_for_trigger:
+                    - trigger: event
+                      event_type: state_changed
+                      event_data:
+                        entity_id: '{{ button_2_entity }}'
+                      id: '0'
+                    timeout:
+                      seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0]
+                        | max }}'
+                    continue_on_timeout: true
+                  - if:
+                    - condition: template
+                      value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                        %}\n  {% set new = wait.trigger.event.data.new_state %}\n
+                        \ {{ old is not none and new is not none\n     and old.state
+                        not in ['unknown', 'unavailable']\n     and new.state not
+                        in ['unknown', 'unavailable']\n     and not old.attributes.get('restored',
+                        false)\n     and not new.attributes.get('restored', false)\n
+                        \    and as_timestamp(new.state, 0) > as_timestamp(old.state,
+                        0)\n     and ((wait.trigger.id == '0' and new.attributes.get('event_type')
+                        == 'multi_press_1')) }}\n{% else %}false{% endif %}"
+                    then:
+                    - variables:
+                        gesture_wait_completed: true
+                        gesture_wait_id: '{{ wait.trigger.id }}'
+            - conditions:
+              - condition: template
+                value_template: '{{ first_third == ''third_down'' }}'
+              sequence:
+              - alias: Start a bounded wait for a matching event from this remote
+                variables:
+                  gesture_wait_completed: false
+                  gesture_wait_id: ''
+                  gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms /
+                    1000) }}'
+              - repeat:
+                  while:
+                  - condition: template
+                    value_template: '{{ not gesture_wait_completed and as_timestamp(now())
+                      < gesture_wait_deadline }}'
+                  sequence:
+                  - wait_for_trigger:
+                    - trigger: event
+                      event_type: state_changed
+                      event_data:
+                        entity_id: '{{ button_1_entity }}'
+                      id: '0'
+                    timeout:
+                      seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0]
+                        | max }}'
+                    continue_on_timeout: true
+                  - if:
+                    - condition: template
+                      value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                        %}\n  {% set new = wait.trigger.event.data.new_state %}\n
+                        \ {{ old is not none and new is not none\n     and old.state
+                        not in ['unknown', 'unavailable']\n     and new.state not
+                        in ['unknown', 'unavailable']\n     and not old.attributes.get('restored',
+                        false)\n     and not new.attributes.get('restored', false)\n
+                        \    and as_timestamp(new.state, 0) > as_timestamp(old.state,
+                        0)\n     and ((wait.trigger.id == '0' and new.attributes.get('event_type')
+                        == 'multi_press_1')) }}\n{% else %}false{% endif %}"
+                    then:
+                    - variables:
+                        gesture_wait_completed: true
+                        gesture_wait_id: '{{ wait.trigger.id }}'
+          - if:
+            - condition: template
+              value_template: '{{ gesture_wait_completed }}'
+            then:
+            - sequence: !input triple_both_action
+            - stop: Combined triple click handled once.
+          - choose:
+            - conditions:
+              - condition: template
+                value_template: '{{ first_third == ''third_up'' }}'
+              sequence:
+              - sequence: !input triple_button_1_action
+              - stop: Button 1 triple click handled once.
+            - conditions:
+              - condition: template
+                value_template: '{{ first_third == ''third_down'' }}'
+              sequence:
+              - sequence: !input triple_button_2_action
+              - stop: Button 2 triple click handled once.
+    - sequence: !input double_button_1_action
+  - conditions:
+    - condition: template
+      value_template: '{{ gesture == ''double_down'' }}'
+    sequence:
+    - alias: Start a bounded wait for a matching event from this remote
+      variables:
+        gesture_wait_completed: false
+        gesture_wait_id: ''
+        gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000) }}'
+    - repeat:
+        while:
+        - condition: template
+          value_template: '{{ not gesture_wait_completed and as_timestamp(now()) <
+            gesture_wait_deadline }}'
+        sequence:
+        - wait_for_trigger:
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_2_entity }}'
+            id: same_third
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_1_entity }}'
+            id: opposite_double
+          timeout:
+            seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max }}'
+          continue_on_timeout: true
+        - if:
+          - condition: template
+            value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+              %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old is
+              not none and new is not none\n     and old.state not in ['unknown',
+              'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+              \    and not old.attributes.get('restored', false)\n     and not new.attributes.get('restored',
+              false)\n     and as_timestamp(new.state, 0) > as_timestamp(old.state,
+              0)\n     and ((wait.trigger.id == 'same_third' and new.attributes.get('event_type')
+              == 'multi_press_1') or (wait.trigger.id == 'opposite_double' and new.attributes.get('event_type')
+              == 'multi_press_2')) }}\n{% else %}false{% endif %}"
+          then:
+          - variables:
+              gesture_wait_completed: true
+              gesture_wait_id: '{{ wait.trigger.id }}'
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ gesture_wait_completed and gesture_wait_id == ''same_third''
+            }}'
+        sequence:
+        - sequence: !input triple_button_2_action
+        - stop: Button 2 triple click handled once.
+      - conditions:
+        - condition: template
+          value_template: '{{ gesture_wait_completed and gesture_wait_id == ''opposite_double''
+            }}'
+        sequence:
+        - alias: Start a bounded wait for a matching event from this remote
+          variables:
+            gesture_wait_completed: false
+            gesture_wait_id: ''
+            gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000)
+              }}'
+        - repeat:
+            while:
+            - condition: template
+              value_template: '{{ not gesture_wait_completed and as_timestamp(now())
+                < gesture_wait_deadline }}'
+            sequence:
+            - wait_for_trigger:
+              - trigger: event
+                event_type: state_changed
+                event_data:
+                  entity_id: '{{ button_1_entity }}'
+                id: third_up
+              - trigger: event
+                event_type: state_changed
+                event_data:
+                  entity_id: '{{ button_2_entity }}'
+                id: third_down
+              timeout:
+                seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max
+                  }}'
+              continue_on_timeout: true
+            - if:
+              - condition: template
+                value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                  %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old
+                  is not none and new is not none\n     and old.state not in ['unknown',
+                  'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+                  \    and not old.attributes.get('restored', false)\n     and not
+                  new.attributes.get('restored', false)\n     and as_timestamp(new.state,
+                  0) > as_timestamp(old.state, 0)\n     and ((wait.trigger.id == 'third_up'
+                  and new.attributes.get('event_type') == 'multi_press_1') or (wait.trigger.id
+                  == 'third_down' and new.attributes.get('event_type') == 'multi_press_1'))
+                  }}\n{% else %}false{% endif %}"
+              then:
+              - variables:
+                  gesture_wait_completed: true
+                  gesture_wait_id: '{{ wait.trigger.id }}'
+        - if:
+          - condition: template
+            value_template: '{{ gesture_wait_completed }}'
+          then:
+          - variables:
+              first_third: '{{ gesture_wait_id }}'
+          - choose:
+            - conditions:
+              - condition: template
+                value_template: '{{ first_third == ''third_up'' }}'
+              sequence:
+              - alias: Start a bounded wait for a matching event from this remote
+                variables:
+                  gesture_wait_completed: false
+                  gesture_wait_id: ''
+                  gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms /
+                    1000) }}'
+              - repeat:
+                  while:
+                  - condition: template
+                    value_template: '{{ not gesture_wait_completed and as_timestamp(now())
+                      < gesture_wait_deadline }}'
+                  sequence:
+                  - wait_for_trigger:
+                    - trigger: event
+                      event_type: state_changed
+                      event_data:
+                        entity_id: '{{ button_2_entity }}'
+                      id: '0'
+                    timeout:
+                      seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0]
+                        | max }}'
+                    continue_on_timeout: true
+                  - if:
+                    - condition: template
+                      value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                        %}\n  {% set new = wait.trigger.event.data.new_state %}\n
+                        \ {{ old is not none and new is not none\n     and old.state
+                        not in ['unknown', 'unavailable']\n     and new.state not
+                        in ['unknown', 'unavailable']\n     and not old.attributes.get('restored',
+                        false)\n     and not new.attributes.get('restored', false)\n
+                        \    and as_timestamp(new.state, 0) > as_timestamp(old.state,
+                        0)\n     and ((wait.trigger.id == '0' and new.attributes.get('event_type')
+                        == 'multi_press_1')) }}\n{% else %}false{% endif %}"
+                    then:
+                    - variables:
+                        gesture_wait_completed: true
+                        gesture_wait_id: '{{ wait.trigger.id }}'
+            - conditions:
+              - condition: template
+                value_template: '{{ first_third == ''third_down'' }}'
+              sequence:
+              - alias: Start a bounded wait for a matching event from this remote
+                variables:
+                  gesture_wait_completed: false
+                  gesture_wait_id: ''
+                  gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms /
+                    1000) }}'
+              - repeat:
+                  while:
+                  - condition: template
+                    value_template: '{{ not gesture_wait_completed and as_timestamp(now())
+                      < gesture_wait_deadline }}'
+                  sequence:
+                  - wait_for_trigger:
+                    - trigger: event
+                      event_type: state_changed
+                      event_data:
+                        entity_id: '{{ button_1_entity }}'
+                      id: '0'
+                    timeout:
+                      seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0]
+                        | max }}'
+                    continue_on_timeout: true
+                  - if:
+                    - condition: template
+                      value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                        %}\n  {% set new = wait.trigger.event.data.new_state %}\n
+                        \ {{ old is not none and new is not none\n     and old.state
+                        not in ['unknown', 'unavailable']\n     and new.state not
+                        in ['unknown', 'unavailable']\n     and not old.attributes.get('restored',
+                        false)\n     and not new.attributes.get('restored', false)\n
+                        \    and as_timestamp(new.state, 0) > as_timestamp(old.state,
+                        0)\n     and ((wait.trigger.id == '0' and new.attributes.get('event_type')
+                        == 'multi_press_1')) }}\n{% else %}false{% endif %}"
+                    then:
+                    - variables:
+                        gesture_wait_completed: true
+                        gesture_wait_id: '{{ wait.trigger.id }}'
+          - if:
+            - condition: template
+              value_template: '{{ gesture_wait_completed }}'
+            then:
+            - sequence: !input triple_both_action
+            - stop: Combined triple click handled once.
+          - choose:
+            - conditions:
+              - condition: template
+                value_template: '{{ first_third == ''third_up'' }}'
+              sequence:
+              - sequence: !input triple_button_1_action
+              - stop: Button 1 triple click handled once.
+            - conditions:
+              - condition: template
+                value_template: '{{ first_third == ''third_down'' }}'
+              sequence:
+              - sequence: !input triple_button_2_action
+              - stop: Button 2 triple click handled once.
+    - sequence: !input double_button_2_action
+  - conditions:
+    - condition: template
+      value_template: '{{ gesture == ''native_triple_up'' }}'
+    sequence:
+    - alias: Start a bounded wait for a matching event from this remote
+      variables:
+        gesture_wait_completed: false
+        gesture_wait_id: ''
+        gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000) }}'
+    - repeat:
+        while:
+        - condition: template
+          value_template: '{{ not gesture_wait_completed and as_timestamp(now()) <
+            gesture_wait_deadline }}'
+        sequence:
+        - wait_for_trigger:
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_2_entity }}'
+            id: '0'
+          - trigger: event
+            event_type: osazee_bilresa_multipress_aborted
+            event_data:
+              entity_id: '{{ button_2_entity }}'
+              event_type: multi_press_aborted
+              presses_at_least: 3
+            id: raw
+            enabled: !input raw_triple_enabled
+          timeout:
+            seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max }}'
+          continue_on_timeout: true
+        - if:
+          - condition: or
+            conditions:
+            - condition: template
+              value_template: '{{ wait.completed and wait.trigger.id == ''raw'' and
+                raw_triple_enabled }}'
+            - condition: and
+              conditions:
+              - condition: template
+                value_template: '{{ wait.completed and wait.trigger.id != ''raw''
+                  }}'
+              - condition: template
+                value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                  %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old
+                  is not none and new is not none\n     and old.state not in ['unknown',
+                  'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+                  \    and not old.attributes.get('restored', false)\n     and not
+                  new.attributes.get('restored', false)\n     and as_timestamp(new.state,
+                  0) > as_timestamp(old.state, 0)\n     and ((wait.trigger.id == '0'
+                  and new.attributes.get('event_type') == 'multi_press_3')) }}\n{%
+                  else %}false{% endif %}"
+          then:
+          - variables:
+              gesture_wait_completed: true
+              gesture_wait_id: '{{ wait.trigger.id }}'
+    - if:
+      - condition: template
+        value_template: '{{ gesture_wait_completed }}'
+      then:
+      - sequence: !input triple_both_action
+      else:
+      - sequence: !input triple_button_1_action
+  - conditions:
+    - condition: template
+      value_template: '{{ gesture == ''native_triple_down'' }}'
+    sequence:
+    - alias: Start a bounded wait for a matching event from this remote
+      variables:
+        gesture_wait_completed: false
+        gesture_wait_id: ''
+        gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000) }}'
+    - repeat:
+        while:
+        - condition: template
+          value_template: '{{ not gesture_wait_completed and as_timestamp(now()) <
+            gesture_wait_deadline }}'
+        sequence:
+        - wait_for_trigger:
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_1_entity }}'
+            id: '0'
+          - trigger: event
+            event_type: osazee_bilresa_multipress_aborted
+            event_data:
+              entity_id: '{{ button_1_entity }}'
+              event_type: multi_press_aborted
+              presses_at_least: 3
+            id: raw
+            enabled: !input raw_triple_enabled
+          timeout:
+            seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max }}'
+          continue_on_timeout: true
+        - if:
+          - condition: or
+            conditions:
+            - condition: template
+              value_template: '{{ wait.completed and wait.trigger.id == ''raw'' and
+                raw_triple_enabled }}'
+            - condition: and
+              conditions:
+              - condition: template
+                value_template: '{{ wait.completed and wait.trigger.id != ''raw''
+                  }}'
+              - condition: template
+                value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                  %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old
+                  is not none and new is not none\n     and old.state not in ['unknown',
+                  'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+                  \    and not old.attributes.get('restored', false)\n     and not
+                  new.attributes.get('restored', false)\n     and as_timestamp(new.state,
+                  0) > as_timestamp(old.state, 0)\n     and ((wait.trigger.id == '0'
+                  and new.attributes.get('event_type') == 'multi_press_3')) }}\n{%
+                  else %}false{% endif %}"
+          then:
+          - variables:
+              gesture_wait_completed: true
+              gesture_wait_id: '{{ wait.trigger.id }}'
+    - if:
+      - condition: template
+        value_template: '{{ gesture_wait_completed }}'
+      then:
+      - sequence: !input triple_both_action
+      else:
+      - sequence: !input triple_button_2_action
+  - conditions:
+    - condition: template
+      value_template: '{{ gesture == ''hold_up'' }}'
+    sequence:
+    - alias: Start a bounded wait for a matching event from this remote
+      variables:
+        gesture_wait_completed: false
+        gesture_wait_id: ''
+        gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000) }}'
+    - repeat:
+        while:
+        - condition: template
+          value_template: '{{ not gesture_wait_completed and as_timestamp(now()) <
+            gesture_wait_deadline }}'
+        sequence:
+        - wait_for_trigger:
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_2_entity }}'
+            id: '0'
+          timeout:
+            seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max }}'
+          continue_on_timeout: true
+        - if:
+          - condition: template
+            value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+              %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old is
+              not none and new is not none\n     and old.state not in ['unknown',
+              'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+              \    and not old.attributes.get('restored', false)\n     and not new.attributes.get('restored',
+              false)\n     and as_timestamp(new.state, 0) > as_timestamp(old.state,
+              0)\n     and ((wait.trigger.id == '0' and new.attributes.get('event_type')
+              == 'long_press')) }}\n{% else %}false{% endif %}"
+          then:
+          - variables:
+              gesture_wait_completed: true
+              gesture_wait_id: '{{ wait.trigger.id }}'
+    - if:
+      - condition: template
+        value_template: '{{ gesture_wait_completed }}'
+      then:
+      - sequence: !input long_both_action
+      - stop: Combined hold handled once.
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ hold_mode == ''dim'' }}'
+        sequence:
+        - if:
+          - condition: template
+            value_template: '{{ not light_entity }}'
+          then:
+          - stop: Light dimming requires a light to be selected in Dimming settings.
+            error: true
+        - if:
+          - condition: state
+            entity_id: !input light_entity
+            state:
+            - unknown
+            - unavailable
+          then:
+          - stop: The selected dimming light is unavailable.
+        - if:
+          - condition: template
+            value_template: '{{ is_state_attr(button_1_entity, ''event_type'', ''long_release'')
+              }}'
+          then:
+          - stop: The button was released before dimming started.
+        - if:
+          - condition: state
+            entity_id: !input light_entity
+            state: 'off'
+          then:
+          - action: light.turn_on
+            target:
+              entity_id: !input light_entity
+            data:
+              brightness_pct: 1
+        - variables:
+            hold_start_time: '{{ as_timestamp(now()) - latency_compensation_offset
+              }}'
+            hold_start_brightness: '{{ state_attr(light_entity, ''brightness'') or
+              0 }}'
+        - action: light.turn_on
+          target:
+            entity_id: !input light_entity
+          data:
+            brightness: 255
+            transition: '{{ (1 - (hold_start_brightness / 255)) * scaled_ramp_time
+              }}'
+        - alias: Start a bounded wait for a matching event from this remote
+          variables:
+            gesture_wait_completed: false
+            gesture_wait_id: ''
+            gesture_wait_deadline: '{{ as_timestamp(now()) + 30 }}'
+        - repeat:
+            while:
+            - condition: template
+              value_template: '{{ not gesture_wait_completed and as_timestamp(now())
+                < gesture_wait_deadline }}'
+            sequence:
+            - wait_for_trigger:
+              - trigger: event
+                event_type: state_changed
+                event_data:
+                  entity_id: '{{ button_1_entity }}'
+                id: '0'
+              timeout:
+                seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max
+                  }}'
+              continue_on_timeout: true
+            - if:
+              - condition: template
+                value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                  %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old
+                  is not none and new is not none\n     and old.state not in ['unknown',
+                  'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+                  \    and not old.attributes.get('restored', false)\n     and not
+                  new.attributes.get('restored', false)\n     and as_timestamp(new.state,
+                  0) > as_timestamp(old.state, 0)\n     and ((wait.trigger.id == '0'
+                  and new.attributes.get('event_type') == 'long_release')) }}\n{%
+                  else %}false{% endif %}"
+              then:
+              - variables:
+                  gesture_wait_completed: true
+                  gesture_wait_id: '{{ wait.trigger.id }}'
+        - action: light.turn_on
+          target:
+            entity_id: !input light_entity
+          data:
+            brightness: '{{ ([hold_start_brightness + (255 / scaled_ramp_time * (as_timestamp(now())
+              - hold_start_time)), 255] | min) | round(0) | int }}'
+            transition: '{{ release_transition }}'
+      - conditions:
+        - condition: template
+          value_template: '{{ hold_mode == ''custom'' }}'
+        sequence:
+        - sequence: !input hold_button_1_action
+      default:
+      - stop: Unsupported single-button hold behavior.
+        error: true
+  - conditions:
+    - condition: template
+      value_template: '{{ gesture == ''hold_down'' }}'
+    sequence:
+    - alias: Start a bounded wait for a matching event from this remote
+      variables:
+        gesture_wait_completed: false
+        gesture_wait_id: ''
+        gesture_wait_deadline: '{{ as_timestamp(now()) + (cooldown_ms / 1000) }}'
+    - repeat:
+        while:
+        - condition: template
+          value_template: '{{ not gesture_wait_completed and as_timestamp(now()) <
+            gesture_wait_deadline }}'
+        sequence:
+        - wait_for_trigger:
+          - trigger: event
+            event_type: state_changed
+            event_data:
+              entity_id: '{{ button_1_entity }}'
+            id: '0'
+          timeout:
+            seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max }}'
+          continue_on_timeout: true
+        - if:
+          - condition: template
+            value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+              %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old is
+              not none and new is not none\n     and old.state not in ['unknown',
+              'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+              \    and not old.attributes.get('restored', false)\n     and not new.attributes.get('restored',
+              false)\n     and as_timestamp(new.state, 0) > as_timestamp(old.state,
+              0)\n     and ((wait.trigger.id == '0' and new.attributes.get('event_type')
+              == 'long_press')) }}\n{% else %}false{% endif %}"
+          then:
+          - variables:
+              gesture_wait_completed: true
+              gesture_wait_id: '{{ wait.trigger.id }}'
+    - if:
+      - condition: template
+        value_template: '{{ gesture_wait_completed }}'
+      then:
+      - sequence: !input long_both_action
+      - stop: Combined hold handled once.
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ hold_mode == ''dim'' }}'
+        sequence:
+        - if:
+          - condition: template
+            value_template: '{{ not light_entity }}'
+          then:
+          - stop: Light dimming requires a light to be selected in Dimming settings.
+            error: true
+        - if:
+          - condition: state
+            entity_id: !input light_entity
+            state:
+            - unknown
+            - unavailable
+          then:
+          - stop: The selected dimming light is unavailable.
+        - if:
+          - condition: template
+            value_template: '{{ is_state_attr(button_2_entity, ''event_type'', ''long_release'')
+              }}'
+          then:
+          - stop: The button was released before dimming started.
+        - variables:
+            hold_start_time: '{{ as_timestamp(now()) - latency_compensation_offset
+              }}'
+            hold_start_brightness: '{{ state_attr(light_entity, ''brightness'') or
+              0 }}'
+        - action: light.turn_on
+          target:
+            entity_id: !input light_entity
+          data:
+            brightness: 1
+            transition: '{{ (hold_start_brightness / 255) * scaled_ramp_time }}'
+        - alias: Start a bounded wait for a matching event from this remote
+          variables:
+            gesture_wait_completed: false
+            gesture_wait_id: ''
+            gesture_wait_deadline: '{{ as_timestamp(now()) + 30 }}'
+        - repeat:
+            while:
+            - condition: template
+              value_template: '{{ not gesture_wait_completed and as_timestamp(now())
+                < gesture_wait_deadline }}'
+            sequence:
+            - wait_for_trigger:
+              - trigger: event
+                event_type: state_changed
+                event_data:
+                  entity_id: '{{ button_2_entity }}'
+                id: '0'
+              timeout:
+                seconds: '{{ [gesture_wait_deadline - as_timestamp(now()), 0] | max
+                  }}'
+              continue_on_timeout: true
+            - if:
+              - condition: template
+                value_template: "{% if wait.completed %}\n  {% set old = wait.trigger.event.data.old_state
+                  %}\n  {% set new = wait.trigger.event.data.new_state %}\n  {{ old
+                  is not none and new is not none\n     and old.state not in ['unknown',
+                  'unavailable']\n     and new.state not in ['unknown', 'unavailable']\n
+                  \    and not old.attributes.get('restored', false)\n     and not
+                  new.attributes.get('restored', false)\n     and as_timestamp(new.state,
+                  0) > as_timestamp(old.state, 0)\n     and ((wait.trigger.id == '0'
+                  and new.attributes.get('event_type') == 'long_release')) }}\n{%
+                  else %}false{% endif %}"
+              then:
+              - variables:
+                  gesture_wait_completed: true
+                  gesture_wait_id: '{{ wait.trigger.id }}'
+        - action: light.turn_on
+          target:
+            entity_id: !input light_entity
+          data:
+            brightness: '{{ ([hold_start_brightness - (255 / scaled_ramp_time * (as_timestamp(now())
+              - hold_start_time)), 0] | max) | round(0) | int }}'
+            transition: '{{ release_transition }}'
+      - conditions:
+        - condition: template
+          value_template: '{{ hold_mode == ''custom'' }}'
+        sequence:
+        - sequence: !input hold_button_2_action
+      default:
+      - stop: Unsupported single-button hold behavior.
+        error: true
+  default:
+  - stop: No supported BILRESA gesture.
