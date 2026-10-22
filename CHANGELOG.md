@@ -4,6 +4,17 @@ Author: OSAZEE.
 
 ## Unreleased
 
+- **2026-10-22:** Replace the single **Light to dim** picker with **Lights to dim**,
+  supporting one or more light entities. Keep the `light_entity` key and accept
+  legacy scalar inputs as well as lists.
+- Dim each light from its own starting brightness and estimate its release level
+  separately. Share the brighten/dim-down sequence using a YAML anchor.
+- Skip unavailable/unknown lights and duplicate selections. Brighten off lights
+  from 1%; leave off lights off when dimming down. Continue remaining light commands
+  if an individual service call fails. Keep the 30-second bounded release wait.
+- Add multi-light dimming regression tests with recorded service calls, without
+  controlling real lights. No companion integration update is required.
+
 - Add **Both buttons - Double click** as the twelfth gesture assignment, with a
   backward-compatible empty action-list default and multiple actions per gesture.
 - Match native double-click events from the same remote in either button order;

@@ -34,3 +34,15 @@ A 06:00 brightness preference is a separate scheduled automation, not a remote g
 ## More than one action
 
 Use **Add action** repeatedly within a gesture. Actions run in order. Avoid long delays: the blueprint ignores further gestures while its current run is active.
+
+## Dim multiple lights with one hold
+
+Choose **Single-button hold behavior → Light dimming**. In **Lights to dim**, select
+your first dimmable light and add more entities with the native multi-entity picker.
+Hold Button 1 to brighten the selected lights, or Button 2 to dim them down. Each
+light uses its own starting brightness and estimated release level. A Home Assistant
+light-group helper is not required.
+
+Unavailable/unknown lights are skipped. Brightening starts off lights at 1%; dimming
+down leaves off lights off. The existing timing and release-transition settings apply
+to all selected lights. Existing single-light selections remain supported after re-import.

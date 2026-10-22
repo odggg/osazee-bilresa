@@ -22,7 +22,8 @@ Two buttons. A whole room of possibilities. Turn your **IKEA BILRESA dual-button
 ### Choose custom holds or built-in dimming
 
 - **Custom actions mode:** freely assign both single-button holds. No controlled light or other target device is required by the blueprint.
-- **Light dimming mode:** hold Button 1 to brighten and Button 2 to dim one selected light. Tune the full brightness ramp from **1–10 seconds**, release-event latency compensation from **0–1 second**, and the release transition from **0–2 seconds**. Defaults are **3 seconds**, **0.06 seconds** and **0.2 seconds** respectively; release stops the ramp at an estimated brightness.
+- **Multi-light dimming mode:** hold Button 1 to brighten and Button 2 to dim **one or more selected lights**. Add entities in **Lights to dim** using Home Assistant's native multi-entity picker. Each light uses its own starting brightness, ramp duration and estimated release brightness, rather than forcing all lights to the same level. Tune the full brightness ramp from **1–10 seconds**, release-event latency compensation from **0–1 second**, and the release transition from **0–2 seconds**. Defaults are **3 seconds**, **0.06 seconds** and **0.2 seconds** respectively.
+- **Mixed light states:** unavailable/unknown lights are skipped. Brightening starts off lights at **1%**; dimming down leaves off lights off. Lights that become unavailable before release are skipped, and individual service errors do not abort the remaining light commands. Device transition support and reporting latency affect the physical result; commands are issued per entity, not as a guaranteed synchronized hardware group.
 - **Clear mode separation:** dimming reserves the two single-button holds, so their custom action lists are ignored. All click actions and both-button gestures remain configurable in either mode. Home Assistant keeps the unused fields visible; they are explicitly labelled.
 
 ### One remote or a shared set — with timing you control
@@ -100,7 +101,9 @@ Every gesture accepts a list of actions. Use Home Assistant's **Add action** con
 **Single-button hold behavior:**
 
 - **Custom actions:** both hold action lists are available; no controlled light is required.
-- **Light dimming:** select one light in the optional dimming section. Button 1 brightens and Button 2 dims. The two custom single-button hold lists remain visible but are ignored. Combined holds and all click actions remain configurable.
+- **Light dimming:** select one or more dimmable light entities in **Lights to dim** in the optional dimming section. Use the native add/select control to include further entities (its label follows your Home Assistant language). Button 1 brightens and Button 2 dims all eligible selections from their own starting levels. The two custom single-button hold lists remain visible but are ignored. Combined holds and all click actions remain configurable.
+
+**Updating an existing single-light setup:** re-import the blueprint. The `light_entity` input key is unchanged, and the dimming logic accepts both the previous single entity ID and the new entity list. Open the automation and add more lights in **Lights to dim**; no light-group helper is required. This is a blueprint-only update, with no companion update required.
 
 The **Recognition window / cooldown** defaults to **250 ms** and can be adjusted from **100–1500 ms**. It measures the gap between related events as received by Home Assistant, not the remote's internal click-counting timeout. Lower values respond faster but make combined presses harder to recognize. The remote may add its own delay before reporting a completed gesture.
 
@@ -154,7 +157,7 @@ Diagnostics contain entity/config-entry identifiers, not Matter credentials. Rev
 
 The raw triple signal and actual light toggling have been observed on a physical dual-button remote. This is not a complete hardware certification for every gesture, every remote or all firmware versions.
 
-The automated tests cover detector sequences, duplicates, diagnostic replay, startup rejection, stale/missing events and remote/endpoint isolation. Additional offline tests execute the actual blueprint's click branches with simulated event timing: combined double clicks in either button order, single/double/triple separation, both hold modes, multiple actions, empty assignments, remote isolation and invalid-state guards. They are not a substitute for Home Assistant runtime or hardware testing. See [development and release checklist](docs/development.md). Combined gestures, dimming and reload/reconnect behavior still need broader physical beta testing.
+The automated tests cover detector sequences, duplicates, diagnostic replay, startup rejection, stale/missing events and remote/endpoint isolation. Additional offline tests execute the actual blueprint's click and dimming branches with simulated event timing and recorded light-service calls: combined double clicks in either button order, single/double/triple separation, both hold modes, multiple actions, empty assignments, remote isolation, multi-light brightness calculations, legacy single-entity inputs, mixed on/off/unavailable states, release guards and bounded waits. No real light services are called. They are not a substitute for Home Assistant runtime or hardware testing. See [development and release checklist](docs/development.md). Combined gestures, dimming and reload/reconnect behavior still need broader physical beta testing.
 
 ## License
 

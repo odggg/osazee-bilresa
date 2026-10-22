@@ -9,13 +9,17 @@ then run `python -B -m unittest discover -s tests -v` from the repository root.
 No Home Assistant installation is required. Syntax-check the integration with
 `python -m compileall -q custom_components`.
 
-The detector is a standalone standard-library module. Blueprint click tests load
+The detector is a standalone standard-library module. Blueprint click/dimming tests load
 the actual YAML and execute its Jinja/branch/wait/stop logic using a bounded,
-marker-action-only interpreter and a simulated clock. They cover both-button double
+offline interpreter and a simulated clock. They cover both-button double
 clicks in both orders, both hold modes, multi-action ordering, empty assignments,
 remote isolation, adjustable timing, invalid/restored/stale states and legacy/native/raw
-triple-click precedence. The interpreter deliberately rejects unmodeled action types;
-it does not run services or simulate hardware. These tests do **not** establish full
+triple-click precedence. Dimming tests record light-service calls and cover individual
+starting brightness, both directions, legacy scalar inputs, multiple entities,
+deduplication, mixed on/off/unavailable states, early/invalid release, service errors,
+bounded timeout and tuning settings. The shared YAML anchor is resolved by the loader.
+The interpreter deliberately rejects unmodeled action types;
+it does not run real services or simulate physical transitions. These tests do **not** establish full
 Home Assistant schema/integration/runtime compatibility or physical-device behavior.
 
 ## Packaging
@@ -35,6 +39,8 @@ Home Assistant schema/integration/runtime compatibility or physical-device behav
 - Confirm raw duplicates and diagnostic history cannot replay actions.
 - Test startup, native Matter reload, server disconnect/reconnect and integration removal.
 - Test custom hold mode, dimming release, duplicate/incomplete remote selection and long action sequences.
+- Physically test multi-light dimming with different starting levels, a mix of on/off
+  and unavailable lights, early release, transition support and larger selections.
 - Validate blueprint schemas/templates in the minimum supported Core version.
 - Run Home Assistant hassfest and HACS validation before requesting default-catalog inclusion.
 
